@@ -1,7 +1,11 @@
+const User = require("../../Models/User")
+const bcrypt = require("bcrypt")
+const jwt = require("jsonwebtoken")
+
 exports.login = async (req,res) => {
     try {
         // get the data from the request body
-        const {email, password, role} = req.body
+        const {email, password} = req.body
         // return 400 bad request if any of the parameters are missing
         if (!email || !password) {
             return res.status(400).json({message: "Invalid Request Missing Parameters"})
@@ -34,6 +38,7 @@ exports.login = async (req,res) => {
            }
         }
     } catch (err) {
+        console.log(err)
         return res.status(500).json({message: "Server error"})
     }
 }

@@ -1,3 +1,6 @@
+const User = require("../../Models/User")
+const bcrypt = require("bcrypt")
+
 exports.signup = async (req, res) => {
     try {
         // get the data from the request body
@@ -7,7 +10,7 @@ exports.signup = async (req, res) => {
             return res.status(400).json({message: "Invalid Request Missing Parameters"})
         }
         // return 403 forbidden if role doesnt match any of the roles in the list
-        if (!["parent","teacher"].include(role)) {
+        if (!["parent","teacher"].includes(role)) {
             return res.status(403).json({message: "Forbidden only Parent and Teacher can Sign-Up"})
         }
         // check if user already exsits in the database
@@ -35,6 +38,7 @@ exports.signup = async (req, res) => {
               })
         }
     } catch (err) {
+        console.log(err)
         return res.status(500).json({message: "Server error"})
     }
 }
