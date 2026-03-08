@@ -19,7 +19,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ["parent","mentor"]
   }
-}, {timestamps: true}, 
-   {versionKey: false})
+}, {timestamps: true})
 
 module.exports = mongoose.model("User", userSchema);
