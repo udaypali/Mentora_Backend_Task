@@ -12,7 +12,6 @@ const lessonSchema = new mongoose.Schema({
         required: true
     },
     mentor: {
-        type: String,
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         required: true
