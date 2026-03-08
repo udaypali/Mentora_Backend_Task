@@ -42,7 +42,17 @@ exports.createStudent = async (req,res) => {
 // see the student acccount
 exports.getStudent = async (req,res) => {
     try {
-        const students = await Student.find({parent: req.user.id}).select("-password")
+        let query = {};
+        if (req.user.role === "parent") {
+            query = {parent: req.user.id};
+        } 
+        else if (req.user.role === "mentor") {
+            query = {}; 
+        } 
+        else {
+            return res.status(403).json({message: "Forbidden"});
+        }
+        const students = await Student.find(query).select("-password")
         res.json(students)
     } catch (err) {
         console.log(err)
