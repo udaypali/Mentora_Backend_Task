@@ -1,6 +1,5 @@
 const mongoose = require("mongoose")
 
-// create a schema for the database
 const studentSchema = new mongoose.Schema({
     name: {
         type: String,

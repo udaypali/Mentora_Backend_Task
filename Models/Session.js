@@ -1,6 +1,5 @@
 const mongoose = require("mongoose")
 
-// create a schema for the database
 const sessionSchema = new mongoose.Schema({
     lesson: {
         type: mongoose.Schema.Types.ObjectId,

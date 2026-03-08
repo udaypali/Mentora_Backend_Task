@@ -1,7 +1,6 @@
 const Student = require("../Models/Student");
 const bcrypt = require("bcrypt")
 
-// creation of student (parent only)
 exports.createStudent = async (req,res) => {
     try {
         if (req.user.role !== "parent") {
@@ -39,7 +38,7 @@ exports.createStudent = async (req,res) => {
     }
 }
 
-// see the student acccount
+
 exports.getStudent = async (req,res) => {
     try {
         let query = {};

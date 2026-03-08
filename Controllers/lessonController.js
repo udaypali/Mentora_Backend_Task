@@ -1,6 +1,5 @@
 const Lesson = require("../Models/Lesson");
 
-// creation of lesson (mentor only)
 exports.createlesson = async (req,res) => {
     try {
         if (req.user.role !== "mentor") {

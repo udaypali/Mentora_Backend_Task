@@ -1,6 +1,5 @@
 const mongoose = require("mongoose")
 
-// create a schema for the database
 const bookingSchema = new mongoose.Schema({
     student: {
         type: mongoose.Schema.Types.ObjectId,
