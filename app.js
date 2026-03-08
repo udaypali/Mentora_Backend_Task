@@ -2,14 +2,16 @@ const express = require('express')
 const connectDB = require('./config/db')
 const authRoutes = require("./Routes/authRoutes");
 const studentRoutes = require("./Routes/studentRoutes")
+const lessonRoutes = require("./Routes/lessonRoutes")
 require('dotenv').config()
 
 const app = express()
 
 app.use(express.json())
 
-app.use(authRoutes);
-app.use(studentRoutes);
+app.use(authRoutes)
+app.use(studentRoutes)
+app.use(lessonRoutes)
 
 const PORT = process.env.PORT || 3000
 

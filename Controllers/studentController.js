@@ -5,9 +5,7 @@ const bcrypt = require("bcrypt")
 exports.createStudent = async (req,res) => {
     try {
         if (req.user.role !== "parent") {
-            return res.status(403).json({
-                message: "Only parents can create students"
-            })
+            return res.status(403).json({message: "Only parents can create students"})
         }
         const {name, email, password, role} = req.body
         if (!name || !email || !password || !role) {
