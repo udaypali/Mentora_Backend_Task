@@ -10,8 +10,8 @@ exports.signup = async (req, res) => {
             return res.status(400).json({message: "Invalid Request Missing Parameters"})
         }
         // return 403 forbidden if role doesnt match any of the roles in the list
-        if (!["parent","teacher"].includes(role)) {
-            return res.status(403).json({message: "Forbidden only Parent and Teacher can Sign-Up"})
+        if (!["parent","mentor"].includes(role)) {
+            return res.status(403).json({message: "Forbidden only Parents and Mentors can Sign-Up"})
         }
         // check if user already exsits in the database
         const existingUser = await User.findOne({email})

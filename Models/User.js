@@ -17,8 +17,9 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ["parent","teacher"]
+    enum: ["parent","mentor"]
   }
-}, { timestamps: true });
+}, {timestamps: true}, 
+   {versionKey: false})
 
 module.exports = mongoose.model("User", userSchema);
