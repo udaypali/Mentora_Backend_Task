@@ -4,19 +4,25 @@ const inputValidator = (Schema) => {
     return (req, res, next) => {
         const validations = ['body', 'params', 'query'].map(key => {
             if (Schema[key]) {
-                return Schema[key].validate(req[key], { abortEarly: false })
+                return Schema[key].validate(req[key], { abortEarly: false });
             }
-            return null
+            return null;
         });
-        const errors = validations
-            .filter(v => v && v.error)
-            .map(v => v.error.details.map(d => d.message).join(', '))
-        if (errors.length > 0) {
-            return res.status(400).json({ message: errors.join(' | ') })
+        const errorObj = validations.find(v => v && v.error);
+        if (errorObj) {
+            const rawMessage = errorObj.error.details[0].message;
+            if (rawMessage.includes('|')) {
+                const [code, cleanMessage] = rawMessage.split('|');
+                return res.status(parseInt(code)).json({ 
+                    success: false, 
+                    message: cleanMessage 
+                });
+            }
+            return res.status(400).json({ success: false, message: rawMessage });
         }
-        next()
-    }
-}
+        next();
+    };
+};
 
 const Schema = {
     signup: {
@@ -85,7 +91,18 @@ const Schema = {
                 'string.pattern.base': 'Invalid Student ID format'
             })
         })
-    })
+    }),
+    llmSummarise: {
+        body: Joi.object({
+            text: Joi.string().min(50).max(12000).regex(/^[a-zA-Z0-9\s.,!?'":;\-\/()]+$/).required().messages({
+                'string.empty':'400|Text cannot be empty',
+                'string.min':'400|Your Content is less than 50 characters.',
+                'string.max':'413|Your Content is more than 12000 characters.',
+                'string.pattern.base':'422|Forbidden characters detected. Avoid using brackets [] or angle brackets <>.',
+                'any.required':'400|Text is required.'
+            })
+        })
+    }
 }
 
 module.exports = {inputValidator, Schema}
