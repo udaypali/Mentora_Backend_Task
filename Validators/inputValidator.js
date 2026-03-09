@@ -13,9 +13,9 @@ const inputValidator = (Schema) => {
             const rawMessage = errorObj.error.details[0].message;
             if (rawMessage.includes('|')) {
                 const [code, cleanMessage] = rawMessage.split('|');
-                return res.status(parseInt(code)).json({ 
-                    success: false, 
-                    message: cleanMessage 
+                return res.status(parseInt(code)).json({
+                    success: false,
+                    message: cleanMessage
                 });
             }
             return res.status(400).json({ success: false, message: rawMessage });
@@ -74,13 +74,13 @@ const Schema = {
         })
     },
     lessonParams: {
-        param: Joi.object({
-            lessonId: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required().messages({
+        params: Joi.object({
+            id: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required().messages({
                 'string.pattern.base': 'Invalid Lesson ID format in URL'
             })
         })
     },
-    joinSession: Joi.object({
+    joinSession: {
         params: Joi.object({
             sessionId: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required().messages({
                 'string.pattern.base': 'Invalid Session ID format in URL'
@@ -91,18 +91,18 @@ const Schema = {
                 'string.pattern.base': 'Invalid Student ID format'
             })
         })
-    }),
+    },
     llmSummarise: {
         body: Joi.object({
             text: Joi.string().min(50).max(12000).regex(/^[a-zA-Z0-9\s.,!?'":;\-\/()]+$/).required().messages({
-                'string.empty':'400|Text cannot be empty',
-                'string.min':'400|Your Content is less than 50 characters.',
-                'string.max':'413|Your Content is more than 12000 characters.',
-                'string.pattern.base':'422|Forbidden characters detected. Avoid using brackets [] or angle brackets <>.',
-                'any.required':'400|Text is required.'
+                'string.empty': '400|Text cannot be empty',
+                'string.min': '400|Your Content is less than 50 characters.',
+                'string.max': '413|Your Content is more than 12000 characters.',
+                'string.pattern.base': '422|Forbidden characters detected. Avoid using brackets [] or angle brackets <>.',
+                'any.required': '400|Text is required.'
             })
         })
     }
 }
 
-module.exports = {inputValidator, Schema}
+module.exports = { inputValidator, Schema }

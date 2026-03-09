@@ -1,14 +1,14 @@
 const ErrorResponse = require('../Utils/errorResponse')
 const Lesson = require("../Models/Lesson")
 
-exports.createlesson = async (req,res) => {
-    const {title, description} = req.body
+exports.createlesson = async (req, res, next) => {
+    const { title, description } = req.body
     if (!title || !description) {
-        return next(new ErrorResponse("Invalid Request Missing Parameters",400))
+        return next(new ErrorResponse("Invalid Request Missing Parameters", 400))
     }
-    const exisitngLesson = await Lesson.findOne({title})
+    const exisitngLesson = await Lesson.findOne({ title })
     if (exisitngLesson) {
-        return next(new ErrorResponse("Lesson Already Exists",400))
+        return next(new ErrorResponse("Lesson Already Exists", 400))
     } else {
         const lesson = await Lesson.create({
             title,

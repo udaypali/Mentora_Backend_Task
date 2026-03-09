@@ -17,7 +17,11 @@ const sessionSchema = new mongoose.Schema({
     summary: {
         type: String,
         required: true
-    }
-}, {timestamps: true})
+    },
+    attendees: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Student"
+    }]
+}, { timestamps: true })
 
 module.exports = mongoose.model("Session", sessionSchema)

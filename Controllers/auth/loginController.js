@@ -3,23 +3,23 @@ const User = require("../../Models/User")
 const jwt = require("jsonwebtoken")
 const bcrypt = require("bcrypt")
 
-exports.login = async (req,res) => {
-    const {email, password} = req.body
+exports.login = async (req, res, next) => {
+    const { email, password } = req.body
     if (!email || !password) {
-        return next(new ErrorResponse("Invalid Request Missing Parameters",400))
+        return next(new ErrorResponse("Invalid Request Missing Parameters", 400))
     }
-    const user = await User.findOne({email})
+    const user = await User.findOne({ email })
     if (!user) {
-        return next(new ErrorResponse("User not Found",404))
+        return next(new ErrorResponse("User not Found", 404))
     } else {
         const validPassword = await bcrypt.compare(password, user.password)
         if (!validPassword) {
-            return next(new ErrorResponse("Email or Password is Incorrect",401))
+            return next(new ErrorResponse("Email or Password is Incorrect", 401))
         } else {
             const token = jwt.sign(
-                {id: user._id, role: user.role},
+                { id: user._id, role: user.role },
                 process.env.JWT_SECRET,
-                {expiresIn: "1d"}
+                { expiresIn: "1d" }
             )
             res.json({
                 token,

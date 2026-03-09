@@ -11,9 +11,7 @@ exports.summarise = async (req, res, next) => {
     const numberedSummary = rawBullets.slice(0, 3).map((point, index) => `${index + 1}. ${point}`).join('\n');
     res.status(200).json({
         success: true,
-        data: {
-            summary: numberedSummary,
-            model: result.model,
-        }
+        summary: numberedSummary,
+        model: result.model,
     })
 }
