@@ -7,9 +7,6 @@ exports.signup = async (req, res) => {
         if (!name || !email || !password || !role) {
             return res.status(400).json({message: "Invalid Request Missing Parameters"})
         }
-        if (!["parent","mentor"].includes(role)) {
-            return res.status(403).json({message: "Forbidden only Parents and Mentors can Sign-Up"})
-        }
         const existingUser = await User.findOne({email})
         if (existingUser) {
             return res.status(400).json({message: "Users Already Exists"})

@@ -2,9 +2,6 @@ const Lesson = require("../Models/Lesson");
 
 exports.createlesson = async (req,res) => {
     try {
-        if (req.user.role !== "mentor") {
-            return res.status(403).json({message: "Forbidden only mentor can create lessons"})
-        } 
         const {title, description} = req.body
         if (!title || !description) {
             return res.status(400).json({message: "Invalid Request Missing Parameters"})
