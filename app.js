@@ -5,6 +5,7 @@ const studentRoutes = require("./Routes/studentRoutes")
 const lessonRoutes = require("./Routes/lessonRoutes")
 const bookingRoutes = require("./Routes/bookingRoutes")
 const sessionRoutes = require("./Routes/sessionRoutes")
+const errorMiddleware = require('./Middleware/errorMiddleware');
 
 require('dotenv').config()
 
@@ -18,6 +19,7 @@ app.use(studentRoutes)
 app.use(lessonRoutes)
 app.use(bookingRoutes)
 app.use(sessionRoutes)
+app.use(errorMiddleware)
 
 const PORT = process.env.PORT || 3000
 
