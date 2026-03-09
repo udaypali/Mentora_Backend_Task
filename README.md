@@ -1,0 +1,479 @@
+# Mentora Backend API
+
+An educational platform backend API that connects parents, students, and mentors. The platform allows mentors to create lessons, parents to book lessons for their students, and provides AI-powered session summarization for parent reports.
+
+## Table of Contents
+- [Project Overview](#project-overview)
+- [Project Structure](#project-structure)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Environment Variables](#environment-variables)
+- [How to Run the Backend](#how-to-run-the-backend)
+- [How to Run Test Cases](#how-to-run-test-cases)
+- [API Endpoints](#api-endpoints)
+- [LLM Configuration](#llm-configuration)
+- [Assumptions and Limitations](#assumptions-and-limitations)
+
+## Project Overview
+
+**Mentora** is a Node.js/Express backend API for an educational platform with the following features:
+- User authentication (JWT-based) with role-based access control
+- Three user roles: `mentor`, `parent`, and `student`
+- Lesson creation and management
+- Booking system for parents to book lessons
+- Session management with notes
+- AI-powered session summarization using Google Gemini
+
+### Technologies Used
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **Node.js** | - | Runtime environment |
+| **Express.js** | ^5.2.1 | Web framework |
+| **MongoDB** | - | Database |
+| **Mongoose** | ^8.23.0 | MongoDB ODM |
+| **JWT** | ^9.0.3 | Authentication tokens |
+| **bcrypt** | ^6.0.0 | Password hashing |
+| **Joi** | ^18.0.2 | Input validation |
+| **express-rate-limit** | ^8.3.1 | Rate limiting |
+| **@google/generative-ai** | ^0.24.1 | Google Gemini AI integration |
+| **dotenv** | ^17.3.1 | Environment variables |
+
+## Project Structure
+
+```
+/workspace/repo-b88c1d08-8c96-43a1-97cc-08e9d2ae5b3c/
+├── app.js                    # Main entry point
+├── package.json              # Dependencies and scripts
+├── package-lock.json         # Lock file
+├── .env.example              # Environment variable template
+├── .gitignore               # Git ignore rules
+├── README.md                # Documentation file
+├── config/
+│   └── db.js                # MongoDB connection configuration
+├── Controllers/
+│   ├── auth/                # Authentication controllers
+│   │   ├── authController.js      # Controller aggregator
+│   │   ├── loginController.js     # Login logic
+│   │   ├── signupController.js    # Registration logic
+│   │   └── profileController.js   # User profile logic
+│   ├── bookingController.js       # Booking management
+│   ├── lessonController.js        # Lesson management
+│   ├── llmController.js           # AI summarization endpoint
+│   ├── sessionController.js       # Session management
+│   └── studentController.js       # Student management
+├── Middleware/
+│   ├── authMiddleware.js          # JWT authentication
+│   ├── errorMiddleware.js         # Global error handling
+│   ├── rateLimiter.js             # Rate limiting for AI
+│   └── roleMiddleware.js          # Role-based access control
+├── Models/
+│   ├── Booking.js                 # Booking schema
+│   ├── Lesson.js                  # Lesson schema
+│   ├── Session.js                 # Session schema
+│   ├── Student.js                 # Student schema
+│   └── User.js                    # User schema
+├── Routes/
+│   ├── authRoutes.js              # Auth endpoints
+│   ├── bookingRoutes.js           # Booking endpoints
+│   ├── lessonRoutes.js            # Lesson endpoints
+│   ├── llmRoutes.js               # AI endpoints
+│   ├── sessionRoutes.js           # Session endpoints
+│   └── studentRoutes.js           # Student endpoints
+├── Services/
+│   └── llmService.js              # Google Gemini AI integration
+├── Utils/
+│   └── errorResponse.js           # Custom error class
+└── Validators/
+    ├── authValidator.js           # Auth role validation
+    └── inputValidator.js          # Joi input validation schemas
+```
+
+## Prerequisites
+
+Before running this project, ensure you have:
+
+1. **Node.js** (v14 or higher) installed
+2. **MongoDB** instance (local or cloud):
+   - Local: [Install MongoDB](https://docs.mongodb.com/manual/installation/)
+   - Cloud: [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+3. **Google Gemini API Key**:
+   - Get your API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+
+## Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   cd mentora
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+## Environment Variables
+
+Create a `.env` file in the root directory. You can copy from `.env.example`:
+
+```bash
+cp .env.example .env
+```
+
+Edit the `.env` file with your configuration:
+
+```env
+PORT=3000
+MONGO_URI=YOUR_MONGODB_URI
+JWT_SECRET=YOUR_JWT_SECRET_KEY
+GEMINI_API_KEY=YOUR_GEMINI_API_KEY
+GEMINI_MODEL_NAME=gemini-1.5-flash
+```
+
+### Variable Descriptions
+
+| Variable | Description | Required | Example |
+|----------|-------------|----------|---------|
+| `PORT` | Server port number | Yes | `3000` |
+| `MONGO_URI` | MongoDB connection string | Yes | `mongodb://localhost:27017/mentora` or `mongodb+srv://...` |
+| `JWT_SECRET` | Secret key for JWT signing | Yes | `your-super-secret-key-min-32-chars` |
+| `GEMINI_API_KEY` | Google Gemini API key | Yes | `AIza...` |
+| `GEMINI_MODEL_NAME` | Gemini model name | Optional (defaults to model in code) | `gemini-1.5-flash` |
+
+### How to Set the API Key
+
+1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Sign in with your Google account
+3. Click "Create API Key"
+4. Copy the generated key
+5. Paste it in your `.env` file as `GEMINI_API_KEY`
+
+## How to Run the Backend
+
+1. **Ensure MongoDB is running** (if using local instance):
+   ```bash
+   mongod
+   ```
+
+2. **Start the server:**
+   ```bash
+   node app.js
+   ```
+
+3. **Verify the server is running:**
+   ```
+   Server running on port 3000
+   ```
+
+The API will be available at `http://localhost:3000`
+
+## How to Run Test Cases
+
+**Current Status:** The project does not have a test suite configured.
+
+The `package.json` currently has a placeholder test script:
+```json
+"scripts": {
+  "test": "echo \"Error: no test specified\" && exit 1"
+}
+```
+
+### To Add Testing Capability
+
+1. **Install testing dependencies:**
+   ```bash
+   npm install --save-dev jest supertest
+   ```
+
+2. **Update `package.json`:**
+   ```json
+   "scripts": {
+     "test": "jest",
+     "test:watch": "jest --watch"
+   }
+   ```
+
+3. **Create a test directory and files:**
+   ```
+   tests/
+   ├── auth.test.js
+   ├── lesson.test.js
+   └── llm.test.js
+   ```
+
+### Test Case Results
+
+Below are screenshots of test cases demonstrating the API functionality:
+
+![Test Case Results](/tmp/images/image.png)
+
+## API Endpoints
+
+### Authentication Routes (`/auth`)
+
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| POST | `/auth/signup` | Public | Register new user (parent/mentor) |
+| POST | `/auth/login` | Public | User login |
+| GET | `/me` | Authenticated (Mentor/Parent) | Get user profile |
+
+### Student Routes (`/students`)
+
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| POST | `/students` | Parent only | Create student (child account) |
+| GET | `/students` | Mentor/Parent | Get students list |
+
+### Lesson Routes (`/lessons`)
+
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| POST | `/lessons` | Mentor only | Create new lesson |
+
+### Booking Routes (`/bookings`)
+
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| POST | `/bookings` | Parent only | Book lesson for student |
+
+### Session Routes (`/sessions`)
+
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| POST | `/sessions` | Mentor only | Create session for lesson |
+| GET | `/lessons/:id/sessions` | Mentor only | Get sessions by lesson |
+| POST | `/sessions/:sessionId/join` | Parent only | Student joins session |
+
+### LLM Routes (`/llm`)
+
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| POST | `/llm/summarize` | Public (rate limited) | AI-generated session summary |
+
+### Example cURL Requests
+
+#### 1. User Signup
+```bash
+curl -X POST http://localhost:3000/auth/signup \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "John Doe",
+    "email": "john@example.com",
+    "password": "password123",
+    "role": "parent"
+  }'
+```
+
+#### 2. User Login
+```bash
+curl -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "john@example.com",
+    "password": "password123"
+  }'
+```
+
+Response:
+```json
+{
+  "success": true,
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "user": {
+    "id": "...",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "role": "parent"
+  }
+}
+```
+
+#### 3. Get User Profile (Requires Token)
+```bash
+curl -X GET http://localhost:3000/me \
+  -H "Authorization: Bearer <YOUR_JWT_TOKEN>"
+```
+
+#### 4. Create a Lesson (Mentor Only)
+```bash
+curl -X POST http://localhost:3000/lessons \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <MENTOR_JWT_TOKEN>" \
+  -d '{
+    "title": "Introduction to Mathematics",
+    "description": "Basic math concepts for beginners"
+  }'
+```
+
+#### 5. Create a Student (Parent Only)
+```bash
+curl -X POST http://localhost:3000/students \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <PARENT_JWT_TOKEN>" \
+  -d '{
+    "name": "Jane Doe",
+    "email": "jane@example.com",
+    "password": "password123",
+    "role": "student"
+  }'
+```
+
+#### 6. Create a Booking (Parent Only)
+```bash
+curl -X POST http://localhost:3000/bookings \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <PARENT_JWT_TOKEN>" \
+  -d '{
+    "studentId": "<STUDENT_OBJECT_ID>",
+    "lessonId": "<LESSON_OBJECT_ID>"
+  }'
+```
+
+#### 7. Create a Session (Mentor Only)
+```bash
+curl -X POST http://localhost:3000/sessions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <MENTOR_JWT_TOKEN>" \
+  -d '{
+    "lessonId": "<LESSON_OBJECT_ID>",
+    "date": "2024-12-25T10:00:00.000Z",
+    "topic": "Algebra Basics",
+    "summary": "Today we covered basic algebraic equations and problem-solving techniques. The student showed good progress in understanding variables and constants."
+  }'
+```
+
+#### 8. Join a Session (Parent Only)
+```bash
+curl -X POST http://localhost:3000/sessions/<SESSION_ID>/join \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <PARENT_JWT_TOKEN>" \
+  -d '{
+    "studentId": "<STUDENT_OBJECT_ID>"
+  }'
+```
+
+#### 9. LLM Summarize (Rate Limited)
+```bash
+curl -X POST http://localhost:3000/llm/summarize \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Today we covered basic algebraic equations and problem-solving techniques. The student showed good progress in understanding variables and constants. We worked on linear equations and the student successfully solved 5 out of 7 practice problems. Areas for improvement include working with fractions in equations."
+  }'
+```
+
+Expected Response:
+```json
+{
+  "success": true,
+  "data": {
+    "summary": "1. Covered basic algebraic equations and problem-solving techniques\n2. Student showed good progress in understanding variables and constants\n3. Successfully solved 5 out of 7 linear equation practice problems",
+    "model": "gemini-1.5-flash"
+  }
+}
+```
+
+## LLM Configuration
+
+### Overview
+The project integrates **Google Gemini AI** for generating session summaries that can be sent to parents as progress reports.
+
+### Configuration File
+**Location:** `Services/llmService.js`
+
+### How It Works
+1. **AI Service:** Uses Google's Generative AI SDK (`@google/generative-ai`)
+2. **Model:** Configurable via `GEMINI_MODEL_NAME` environment variable
+3. **Prompt Engineering:** Converts session notes into 3-6 concise bullet points
+4. **Output Format:** Numbered summary (1., 2., 3.) for easy reading
+
+### Rate Limiting
+- **Limit:** 5 requests per hour per IP address
+- **Window:** 60 minutes
+- **Error Response:**
+  ```json
+  {
+    "success": false,
+    "message": "429|Too many reports generated. Please try again in an hour."
+  }
+  ```
+
+### Testing the LLM Endpoint
+
+**Example cURL request:**
+```bash
+curl -X POST http://localhost:3000/llm/summarize \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Session notes: Student learned about fractions today. Started with basic concepts of numerator and denominator. Practiced adding simple fractions with common denominators. Student struggled a bit with converting mixed numbers to improper fractions but improved after additional examples. Homework assigned: practice problems 1-10 on page 45."
+  }'
+```
+
+**Expected Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "summary": "1. Student learned basic fraction concepts including numerator and denominator\n2. Practiced adding simple fractions with common denominators\n3. Improved understanding of converting mixed numbers after additional examples",
+    "model": "gemini-1.5-flash"
+  }
+}
+```
+
+## Assumptions and Limitations
+
+### Assumptions
+
+1. **MongoDB Object IDs:** All entity references (studentId, lessonId, sessionId) must be valid 24-character hexadecimal MongoDB ObjectIDs
+2. **Date Format:** Session dates must be in ISO 8601 format (e.g., `2024-12-25T10:00:00.000Z`)
+3. **Role Assignment:**
+   - Only `mentor` and `parent` roles can sign up directly
+   - `student` role is assigned when a parent creates a student account
+4. **Authentication:** All protected endpoints require a valid JWT token in the `Authorization: Bearer <token>` header
+
+### Limitations
+
+1. **Text Input Constraints for LLM:**
+   - **Minimum:** 50 characters
+   - **Maximum:** 12,000 characters
+   - **Allowed Characters:** Alphanumeric, spaces, and basic punctuation (`.,!?'":;-/()`)
+   - **Forbidden Characters:** Brackets `[]` and angle brackets `<>` are not allowed
+
+2. **Rate Limiting:**
+   - LLM endpoint limited to 5 requests per hour per IP
+   - This prevents abuse and controls API costs
+
+3. **AI Summary Constraints:**
+   - Output is limited to exactly 3 bullet points (processed from 3-6 generated points)
+   - AI will not hallucinate information - only facts from the input notes are used
+   - No introductory text like "Here are the points" is included
+
+4. **No Test Suite:** Currently, no automated tests are implemented. Manual testing via cURL or Postman is required.
+
+5. **Security Considerations:**
+   - JWT tokens should be kept secure
+   - HTTPS is recommended for production deployments
+   - Rate limiting is basic (IP-based only)
+
+6. **Password Requirements:**
+   - Minimum 6 characters
+   - No complexity requirements enforced
+
+---
+
+## Security Features
+
+1. **JWT Authentication** - Token-based auth via `Authorization: Bearer <token>` header
+2. **Role-Based Access Control** - Three roles: `mentor`, `parent`, `student`
+3. **Password Hashing** - bcrypt with salt round 10
+4. **Input Validation** - Joi schemas for all endpoints
+5. **Rate Limiting** - AI endpoint limited to 5 requests/hour
+6. **Error Handling** - Centralized error middleware with custom ErrorResponse class
+
+## Support
+
+For issues or questions, please check:
+1. Environment variables are correctly set
+2. MongoDB is running and accessible
+3. Google Gemini API key is valid
+4. JWT token is properly formatted in requests
