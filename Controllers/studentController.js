@@ -3,9 +3,6 @@ const bcrypt = require("bcrypt")
 
 exports.createStudent = async (req,res) => {
     try {
-        if (req.user.role !== "parent") {
-            return res.status(403).json({message: "Only parents can create students"})
-        }
         const {name, email, password, role} = req.body
         if (!name || !email || !password || !role) {
             return res.status(400).json({message: "Invalid Request Missing Parameters"})
@@ -37,7 +34,6 @@ exports.createStudent = async (req,res) => {
         return res.status(500).json({message: "Invalid Response"})
     }
 }
-
 
 exports.getStudent = async (req,res) => {
     try {

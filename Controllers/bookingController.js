@@ -4,9 +4,6 @@ const Lesson = require("../Models/Lesson");
 
 exports.createbooking = async (req,res) => {
     try {
-        if (req.user.role !== "parent") {
-            return res.status(403).json({message: "FOrbidden only parent can assign lesson to student"})
-        }
         const {studentEmail, lessonTitle} = req.body;
         if (!studentEmail || !lessonTitle) {
             return res.status(400).json({message: "Invalid Request Missing Parameters"})

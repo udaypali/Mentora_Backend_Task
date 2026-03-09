@@ -16,7 +16,8 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ["parent","mentor"]
+    enum: ["parent","mentor"],
+    required: true
   }
 }, {timestamps: true})
 
