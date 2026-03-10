@@ -410,10 +410,8 @@ Expected Response:
 ```json
 {
   "success": true,
-  "data": {
-    "summary": "1. Covered basic algebraic equations and problem-solving techniques\n2. Student showed good progress in understanding variables and constants\n3. Successfully solved 5 out of 7 linear equation practice problems",
-    "model": "gemini-2.0-flash"
-  }
+  "summary": "1. Covered basic algebraic equations and problem-solving techniques\n2. Student showed good progress in understanding variables and constants\n3. Successfully solved 5 out of 7 linear equation practice problems",
+  "model": "models/gemini-2.5-flash"
 }
 ```
 
@@ -534,6 +532,13 @@ The project integrates **Google Gemini AI** for generating session summaries tha
   }
   ```
 
+### Swagger API Documentation
+The API includes interactive Swagger documentation available at:
+```
+http://localhost:3000/api-docs
+```
+This provides a UI to explore and test all API endpoints.
+
 ### Testing the LLM Endpoint
 
 **Example cURL request:**
@@ -549,10 +554,8 @@ curl -X POST http://localhost:3000/llm/summarize \
 ```json
 {
   "success": true,
-  "data": {
-    "summary": "1. Student learned basic fraction concepts including numerator and denominator\n2. Practiced adding simple fractions with common denominators\n3. Improved understanding of converting mixed numbers after additional examples",
-    "model": "gemini-2.0-flash"
-  }
+  "summary": "1. Student learned basic fraction concepts including numerator and denominator\n2. Practiced adding simple fractions with common denominators\n3. Improved understanding of converting mixed numbers after additional examples",
+  "model": "models/gemini-2.5-flash"
 }
 ```
 
@@ -576,7 +579,7 @@ curl -X POST http://localhost:3000/llm/summarize \
    - **Forbidden Characters:** Brackets `[]` and angle brackets `<>` are not allowed
 
 2. **Rate Limiting:**
-   - LLM endpoint limited to 7 requests per 5 seconds per IP
+   - LLM endpoint limited to 7 requests per 1 minute per IP
    - This prevents abuse and controls API costs
 
 3. **AI Summary Constraints:**
