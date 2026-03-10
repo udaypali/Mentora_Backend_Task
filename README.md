@@ -137,7 +137,7 @@ MONGO_URI=YOUR_MONGODB_URI
 JWT_SECRET=YOUR_JWT_SECRET_KEY
 SESSION_SECRET=YOUR_SESSION_SECRET_KEY
 GEMINI_API_KEY=YOUR_GEMINI_API_KEY
-GEMINI_MODEL_NAME=gemini-2.0-flash
+GEMINI_MODEL_NAME=models/gemini-2.5-flash
 ```
 
 ### Variable Descriptions
@@ -149,7 +149,7 @@ GEMINI_MODEL_NAME=gemini-2.0-flash
 | `JWT_SECRET` | Secret key for JWT signing | Yes | `your-super-secret-key-min-32-chars` |
 | `SESSION_SECRET` | Secret key for session management | Optional | `your-super-secret-session-key` |
 | `GEMINI_API_KEY` | Google Gemini API key | Yes | `AIza...` |
-| `GEMINI_MODEL_NAME` | Gemini model name | Optional (defaults to model in code) | `gemini-2.0-flash` |
+| `GEMINI_MODEL_NAME` | Gemini model name | Optional (defaults to model in code) | `models/gemini-2.5-flash` |
 
 ### How to Set the API Key
 
@@ -524,13 +524,13 @@ The project integrates **Google Gemini AI** for generating session summaries tha
 4. **Output Format:** Numbered summary (1., 2., 3.) for easy reading
 
 ### Rate Limiting
-- **Limit:** 7 requests per 5 seconds per IP address
-- **Window:** 5 seconds
+- **Limit:** 7 requests per 1 minute per IP address
+- **Window:** 1 minute
 - **Error Response:**
   ```json
   {
     "success": false,
-    "message": "429|Too many reports generated. Please try again in an hour."
+    "message": "429|Too many reports generated. Please try again in an minute."
   }
   ```
 
