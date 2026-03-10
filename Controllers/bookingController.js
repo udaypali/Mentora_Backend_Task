@@ -3,7 +3,7 @@ const Booking = require("../Models/Booking")
 const Student = require("../Models/Student")
 const Lesson = require("../Models/Lesson")
 
-exports.createbooking = async (req, res, next) => {
+exports.booking = async (req, res, next) => {
     const { studentId, lessonId } = req.body
     const student = await Student.findById(studentId)
     if (!student) {
@@ -30,4 +30,34 @@ exports.createbooking = async (req, res, next) => {
         student: studentId,
         lesson: lessonId
     })
+}
+
+exports.getBooking = async (req, res, next) => {
+    const { bookingId } = req.params
+    const booking = await Booking.findById(bookingId)
+    if (!booking) {
+        return next(new ErrorResponse("Booking not found", 404))
+    }
+    res.status(200).json({
+        success: true,
+        data: booking
+    })
+}
+
+exports.deleteBooking = async (req, res, next) => {
+    const { bookingId } = req.params
+    const userId = req.user.id
+    const booking = await Booking.findById(bookingId)
+    if (!booking) {
+        return next(new ErrorResponse("Booking not found", 404))
+    }
+    const student = await Student.findById(booking.student)
+    if (!student || student.parent.toString() !== userId) {
+        return next(new ErrorResponse("Not authorized to cancel this booking", 403));
+    }
+    await booking.deleteOne();
+    res.status(200).json({
+        success: true,
+        message: "Booking canceled successfully"
+    });
 }

@@ -9,6 +9,8 @@ const {inputValidator, Schema} = require("../Validators/inputValidator")
 
 router.post('/auth/signup', authValidator, inputValidator(Schema.signup), authController.signup)
 router.post("/auth/login", inputValidator(Schema.login), authController.login)
+router.delete("/me", authMiddleware, roleMiddleware(['mentor','parent']), authController.deleteProfile)
+router.put("/me", authMiddleware, inputValidator(Schema.updateProfile), roleMiddleware(['mentor','parent']), authController.updateProfile)
 router.get("/me", authMiddleware, roleMiddleware(['mentor','parent']), authController.profile)
 
 module.exports = router
