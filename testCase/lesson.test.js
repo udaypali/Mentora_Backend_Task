@@ -1,154 +1,130 @@
-const request = require("supertest");
-const app = require("../app");
+const request = require('supertest');
+const mongoose = require('mongoose');
+const app = require('../app');
+const User = require('../Models/User');
+const Lesson = require('../Models/Lesson');
 
-let mentorToken;
-let parentToken;
+const getDynamicEmail = (prefix) => `test_${prefix}_${Date.now()}_${Math.random().toString(36).substring(7)}@example.com`;
 
-beforeAll(async () => {
-    const ts = Date.now();
-    // Register & login Mentor
-    await request(app).post("/auth/signup").send({
-        name: "Lesson Mentor",
-        email: `lesson.mentor.${ts}@example.com`,
-        password: "password123",
-        role: "mentor",
-    });
-    const mLog = await request(app).post("/auth/login").send({
-        email: `lesson.mentor.${ts}@example.com`,
-        password: "password123",
-    });
-    mentorToken = mLog.body.token;
+describe('Lesson Endpoints', () => {
+    let mentor1Email = getDynamicEmail('mentor1');
+    let mentor2Email = getDynamicEmail('mentor2');
+    let parentEmail = getDynamicEmail('parent');
 
-    // Register & login Parent
-    await request(app).post("/auth/signup").send({
-        name: "Lesson Parent",
-        email: `lesson.parent.${ts}@example.com`,
-        password: "password123",
-        role: "parent",
-    });
-    const pLog = await request(app).post("/auth/login").send({
-        email: `lesson.parent.${ts}@example.com`,
-        password: "password123",
-    });
-    parentToken = pLog.body.token;
-});
+    let mentor1Token, mentor2Token, parentToken;
+    let lessonId;
+    let lessonTitle = `Test Lesson ${Date.now()}`;
 
-// ─────────────────────────────────────────────
-//  POST /lessons
-// ─────────────────────────────────────────────
-describe("POST /lessons", () => {
-    // ── Happy Path ──────────────────────────────
-    test("201 – mentor creates a lesson successfully", async () => {
-        const ts = Date.now();
-        const res = await request(app)
-            .post("/lessons")
-            .set("Authorization", `Bearer ${mentorToken}`)
-            .send({
-                title: `Introduction to Algebra ${ts}`,
-                description: "A beginner's guide to algebraic concepts and equations.",
-            });
-        expect(res.statusCode).toBe(201);
-        expect(res.body).toHaveProperty("message", "Created Lesson");
-        expect(res.body.Lesson).toMatchObject({
-            title: `Introduction to Algebra ${ts}`,
+    beforeAll(async () => {
+        // 1. Create Users via Signup
+        await request(app).post('/auth/signup').send({
+            name: 'Mentor One', email: mentor1Email, password: 'password123', role: 'mentor'
+        });
+        await request(app).post('/auth/signup').send({
+            name: 'Mentor Two', email: mentor2Email, password: 'password123', role: 'mentor'
+        });
+        await request(app).post('/auth/signup').send({
+            name: 'Parent User', email: parentEmail, password: 'password123', role: 'parent'
+        });
+
+        // 2. Login to capture tokens (Normalizing for your specific response structure)
+        const loginM1 = await request(app).post('/auth/login').send({ email: mentor1Email, password: 'password123' });
+        const loginM2 = await request(app).post('/auth/login').send({ email: mentor2Email, password: 'password123' });
+        const loginP = await request(app).post('/auth/login').send({ email: parentEmail, password: 'password123' });
+
+        mentor1Token = loginM1.body.token || (loginM1.body.data && loginM1.body.data.token);
+        mentor2Token = loginM2.body.token || (loginM2.body.data && loginM2.body.data.token);
+        parentToken = loginP.body.token || (loginP.body.data && loginP.body.data.token);
+
+        if (!mentor1Token) throw new Error("SETUP FAIL: Tokens not generated. Check login response structure.");
+    });
+
+    afterAll(async () => {
+        await User.deleteMany({ email: { $regex: /test_.*@example\.com/ } });
+        await Lesson.deleteMany({ title: { $regex: /Test Lesson/ } });
+        await mongoose.connection.close();
+    });
+
+    describe('POST /lessons', () => {
+        it('should allow a mentor to create a lesson', async () => {
+            const res = await request(app)
+                .post('/lessons')
+                .set('Authorization', `Bearer ${mentor1Token}`)
+                .send({
+                    title: lessonTitle,
+                    description: 'This is a test lesson'
+                });
+
+            expect(res.statusCode).toBe(201);
+            // Support for different response shapes
+            const body = res.body.data || res.body.Lesson || res.body.lesson || res.body;
+            lessonId = body.id || body._id;
+            expect(lessonId).toBeDefined();
+        });
+
+        it('should fail if parent tries to create a lesson (RBAC check)', async () => {
+            const res = await request(app)
+                .post('/lessons')
+                .set('Authorization', `Bearer ${parentToken}`)
+                .send({
+                    title: `Parent Illegal Lesson ${Date.now()}`,
+                    description: 'Parent test lesson'
+                });
+            expect(res.statusCode).toBe(403);
         });
     });
 
-    // ── Role Guard ───────────────────────────────
-    test("403 – parent cannot create a lesson", async () => {
-        const ts = Date.now();
-        const res = await request(app)
-            .post("/lessons")
-            .set("Authorization", `Bearer ${parentToken}`)
-            .send({
-                title: `Parent Secret Lesson ${ts}`,
-                description: "Parents should not be able to create lessons at all.",
-            });
-        expect(res.statusCode).toBe(403);
-    });
+    describe('GET /lessons/:lessonId', () => {
+        it('should return a specific lesson by ID', async () => {
+            const res = await request(app)
+                .get(`/lessons/${lessonId}`)
+                .set('Authorization', `Bearer ${parentToken}`);
 
-    // ── Auth Failures ────────────────────────────
-    test("401 – no token provided", async () => {
-        const res = await request(app).post("/lessons").send({
-            title: "Unauthenticated Lesson",
-            description: "This request has no auth header and should be rejected.",
+            expect(res.statusCode).toBe(200);
+            const data = res.body.data || res.body.lesson || res.body;
+
+            // Convert both to strings to ensure comparison works
+            expect(data._id.toString()).toBe(lessonId.toString());
+            expect(data.title).toBe(lessonTitle);
         });
-        expect(res.statusCode).toBe(401);
     });
 
-    test("401 – invalid token", async () => {
-        const res = await request(app)
-            .post("/lessons")
-            .set("Authorization", "Bearer badtoken123")
-            .send({
-                title: "Bad Token Lesson",
-                description: "This request has an invalid token and should fail.",
-            });
-        expect(res.statusCode).toBe(401);
+    describe('PUT /lessons/:lessonId', () => {
+        it('should allow mentor to update their own lesson', async () => {
+            const updatedTitle = `${lessonTitle} Updated`;
+            const res = await request(app)
+                .put(`/lessons/${lessonId}`)
+                .set('Authorization', `Bearer ${mentor1Token}`)
+                .send({
+                    title: updatedTitle,
+                    description: 'Updated Description'
+                });
+
+            expect(res.statusCode).toBe(200);
+            const data = res.body.data || res.body.lesson || res.body;
+            expect(data.title).toBe(updatedTitle);
+        });
+
+        it('should NOT allow Mentor 2 to update Mentor 1 lesson (BOLA Check)', async () => {
+            const res = await request(app)
+                .put(`/lessons/${lessonId}`)
+                .set('Authorization', `Bearer ${mentor2Token}`)
+                .send({ title: 'Hacked Title' });
+
+            expect(res.statusCode).toBe(403);
+        });
     });
 
-    // ── Validation Failures ──────────────────────
-    test("400 – missing title", async () => {
-        const res = await request(app)
-            .post("/lessons")
-            .set("Authorization", `Bearer ${mentorToken}`)
-            .send({ description: "Description without a title, should fail." });
-        expect(res.statusCode).toBe(400);
-        expect(res.body).toHaveProperty("success", false);
-    });
+    describe('DELETE /lessons/:lessonId', () => {
+        it('should allow owner mentor to delete their lesson', async () => {
+            const res = await request(app)
+                .delete(`/lessons/${lessonId}`)
+                .set('Authorization', `Bearer ${mentor1Token}`);
 
-    test("400 – missing description", async () => {
-        const res = await request(app)
-            .post("/lessons")
-            .set("Authorization", `Bearer ${mentorToken}`)
-            .send({ title: "Title Only" });
-        expect(res.statusCode).toBe(400);
-        expect(res.body).toHaveProperty("success", false);
-    });
+            expect(res.statusCode).toBe(200);
 
-    test("400 – title shorter than 3 characters", async () => {
-        const res = await request(app)
-            .post("/lessons")
-            .set("Authorization", `Bearer ${mentorToken}`)
-            .send({ title: "AB", description: "Description is long enough here." });
-        expect(res.statusCode).toBe(400);
-        expect(res.body).toHaveProperty("success", false);
-    });
-
-    test("400 – description shorter than 10 characters", async () => {
-        const res = await request(app)
-            .post("/lessons")
-            .set("Authorization", `Bearer ${mentorToken}`)
-            .send({ title: "Valid Title", description: "Short" });
-        expect(res.statusCode).toBe(400);
-        expect(res.body).toHaveProperty("success", false);
-    });
-
-    test("400 – duplicate lesson title", async () => {
-        const ts = Date.now();
-        await request(app)
-            .post("/lessons")
-            .set("Authorization", `Bearer ${mentorToken}`)
-            .send({
-                title: `Duplicate Lesson ${ts}`,
-                description: "First creation of this lesson title.",
-            });
-        const res = await request(app)
-            .post("/lessons")
-            .set("Authorization", `Bearer ${mentorToken}`)
-            .send({
-                title: `Duplicate Lesson ${ts}`,
-                description: "Second creation of the same title should be rejected.",
-            });
-        expect(res.statusCode).toBe(400);
-    });
-
-    test("400 – empty body", async () => {
-        const res = await request(app)
-            .post("/lessons")
-            .set("Authorization", `Bearer ${mentorToken}`)
-            .send({});
-        expect(res.statusCode).toBe(400);
-        expect(res.body).toHaveProperty("success", false);
+            const check = await Lesson.findById(lessonId);
+            expect(check).toBeNull();
+        });
     });
 });

@@ -32,16 +32,54 @@ exports.session = async (req, res, next) => {
     })
 }
 
-exports.getsession = async (req, res, next) => {
-    const { id } = req.params
-    const sessions = await Session.find({ lesson: id }).sort({ date: -1 })
+exports.getSession = async (req, res, next) => {
+    const { lessonId } = req.params
+    const sessions = await Session.find({ lesson: lessonId }).sort({ date: -1 })
     if (!sessions || sessions.length === 0) {
         return next(new ErrorResponse("No Session Found for this Lesson", 404))
     }
     res.status(200).json(sessions)
 }
 
-exports.joinsession = async (req, res, next) => {
+exports.deleteSession = async (req, res, next) => {
+    const { sessionId } = req.params
+    const userId = req.user.id
+    const session = await Session.findById(sessionId);
+    if (!session) {
+        return next(new ErrorResponse("Session not found", 404))
+    }
+    const lesson = await Lesson.findById(session.lesson)
+    if (lesson.mentor.toString() !== userId) {
+        return next(new ErrorResponse("Not authorized to delete this session", 403))
+    }
+    await session.deleteOne()
+    res.status(200).json({
+        success: true,
+        message: "Session deleted successfully"
+    })
+}
+
+exports.updateSession = async (req, res, next) => {
+    const { sessionId } = req.params
+    const userId = req.user.id
+    const session = await Session.findById(sessionId)
+    if (!session) {
+        return next(new ErrorResponse("Session not found", 404))
+    }
+    const lesson = await Lesson.findById(session.lesson)
+    if (lesson.mentor.toString() !== userId) {
+        return next(new ErrorResponse("Not authorized to update this session", 403))
+    }
+    session.topic = req.body.topic || session.topic
+    session.summary = req.body.summary || session.summary
+    await session.save()
+    res.status(200).json({
+        success: true,
+        data: session
+    })
+}
+
+exports.joinSession = async (req, res, next) => {
     const { sessionId } = req.params
     const { studentId } = req.body
     const session = await Session.findById(sessionId)

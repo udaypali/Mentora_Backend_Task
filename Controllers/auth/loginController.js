@@ -11,6 +11,8 @@ exports.login = async (req, res, next) => {
     const user = await User.findOne({ email })
     if (!user) {
         return next(new ErrorResponse("User not Found", 404))
+    } else if (user.role === 'student') {
+        return next(new ErrorResponse("Students cannot login directly", 403))
     } else {
         const validPassword = await bcrypt.compare(password, user.password)
         if (!validPassword) {

@@ -24,6 +24,14 @@ const inputValidator = (Schema) => {
     };
 };
 
+const objectId = (label) =>
+    Joi.string()
+        .regex(/^[0-9a-fA-F]{24}$/)
+        .required()
+        .messages({ 'string.pattern.base': `Invalid ${label} ID format` });
+const forbidden403 = (msg) =>
+    Joi.any().forbidden().messages({ 'any.unknown': `403|${msg}` });
+
 const Schema = {
     signup: {
         body: Joi.object({
@@ -39,13 +47,36 @@ const Schema = {
             password: Joi.string().min(6).required()
         })
     },
+    updateProfile: {
+        body: Joi.object({
+            name: Joi.string().min(3).optional(),
+            email: Joi.string().email().optional(),
+            password: Joi.string().min(6).optional(),
+            role: forbidden403('You are not permitted to change your account role.'),
+            _id: forbidden403('The account ID is immutable.'),
+            id: forbidden403('The account ID is immutable.')
+        }).min(1).messages({
+            'object.min': '400|Please provide at least one field to update (name, email, or password).'
+        })
+    },
     student: {
         body: Joi.object({
             name: Joi.string().min(3).required(),
             email: Joi.string().email().required(),
             password: Joi.string().min(6).required(),
-            role: Joi.string().valid('parent', 'mentor').required()
+            role: Joi.string().valid('student').default('student')
         })
+    },
+    deleteStudent: { params: Joi.object({ studentId: objectId('Student') }) },
+    updateStudent: {
+        params: Joi.object({ studentId: objectId('Student') }),
+        body: Joi.object({
+            name: Joi.string().min(3).optional(),
+            email: Joi.string().email().optional(),
+            password: Joi.string().min(6).optional(),
+            role: forbidden403("You cannot change a student's role."),
+            parentId: forbidden403('You cannot reassign a student to a different parent.')
+        }).min(1)
     },
     lesson: {
         body: Joi.object({
@@ -53,54 +84,58 @@ const Schema = {
             description: Joi.string().min(10).required()
         })
     },
+    getLesson: { params: Joi.object({ lessonId: objectId('Lesson') }) },
+    deleteLesson: { params: Joi.object({ lessonId: objectId('Lesson') }) },
+    updateLesson: {
+        params: Joi.object({ lessonId: objectId('Lesson') }),
+        body: Joi.object({
+            title: Joi.string().min(3).optional(),
+            description: Joi.string().min(10).optional()
+        }).min(1)
+    },
     booking: {
         body: Joi.object({
-            studentId: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required().messages({
-                'string.pattern.base': 'Invalid Student ID format'
-            }),
-            lessonId: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required().messages({
-                'string.pattern.base': 'Invalid Lesson ID format'
-            })
+            studentId: objectId('Student'),
+            lessonId: objectId('Lesson')
         })
     },
+    getBooking: { params: Joi.object({ bookingId: objectId('Booking') }) },
+    deleteBooking: { params: Joi.object({ bookingId: objectId('Booking') }) },
     session: {
         body: Joi.object({
-            lessonId: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required().messages({
-                'string.pattern.base': 'Invalid Lesson ID format'
-            }),
+            lessonId: objectId('Lesson'),
             date: Joi.date().iso().required(),
             topic: Joi.string().max(100).required(),
             summary: Joi.string().min(10).required()
         })
     },
-    lessonParams: {
-        params: Joi.object({
-            id: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required().messages({
-                'string.pattern.base': 'Invalid Lesson ID format in URL'
-            })
-        })
+    getSession: { params: Joi.object({ lessonId: objectId('Lesson') }) },
+    deleteSession: { params: Joi.object({ sessionId: objectId('Session') }) },
+    updateSession: {
+        params: Joi.object({ sessionId: objectId('Session') }),
+        body: Joi.object({
+            topic: Joi.string().max(100).optional(),
+            summary: Joi.string().min(10).optional()
+        }).min(1)
     },
     joinSession: {
-        params: Joi.object({
-            sessionId: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required().messages({
-                'string.pattern.base': 'Invalid Session ID format in URL'
-            })
-        }),
-        body: Joi.object({
-            studentId: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required().messages({
-                'string.pattern.base': 'Invalid Student ID format'
-            })
-        })
+        params: Joi.object({ sessionId: objectId('Session') }),
+        body: Joi.object({ studentId: objectId('Student') })
     },
     llmSummarise: {
         body: Joi.object({
-            text: Joi.string().min(50).max(12000).regex(/^[a-zA-Z0-9\s.,!?'":;\-\/()]+$/).required().messages({
-                'string.empty': '400|Text cannot be empty',
-                'string.min': '400|Your Content is less than 50 characters.',
-                'string.max': '413|Your Content is more than 12000 characters.',
-                'string.pattern.base': '422|Forbidden characters detected. Avoid using brackets [] or angle brackets <>.',
-                'any.required': '400|Text is required.'
-            })
+            text: Joi.string()
+                .min(50)
+                .max(12000)
+                .regex(/^[a-zA-Z0-9\s.,!?'":;\-\/()]+$/)
+                .required()
+                .messages({
+                    'string.empty': '400|Text cannot be empty',
+                    'string.min': '400|Your Content is less than 50 characters.',
+                    'string.max': '413|Your Content is more than 12000 characters.',
+                    'string.pattern.base': '422|Forbidden characters detected. Avoid using brackets [] or angle brackets <>.',
+                    'any.required': '400|Text is required.'
+                })
         })
     }
 }
