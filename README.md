@@ -234,7 +234,9 @@ Tests are located in the `testCase/` directory:
 
 Below are screenshots of test cases demonstrating the API functionality:
 
-![Test Case Results](/tmp/images/image.png)
+![](/public/images/testcase_1.png)
+![](/public/images/testcase_2.png)
+![](/public/images/testcase_3.png)
 
 ## API Endpoints
 
