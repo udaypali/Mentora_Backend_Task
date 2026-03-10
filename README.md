@@ -51,6 +51,7 @@ Mentora_Backend_Task/
 ├── README.md                # Documentation file
 ├── config/
 │   └── db.js                # MongoDB connection configuration
+|   └── swagger.js           # Swagger UI Logic
 ├── Controllers/
 │   ├── auth/                # Authentication controllers
 │   │   ├── authController.js      # Controller aggregator
