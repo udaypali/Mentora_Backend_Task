@@ -42,7 +42,7 @@ An educational platform backend API that connects parents, students, and mentors
 ## Project Structure
 
 ```
-/workspace/repo-b88c1d08-8c96-43a1-97cc-08e9d2ae5b3c/
+Mentora_Backend_Task/
 ├── app.js                    # Main entry point
 ├── package.json              # Dependencies and scripts
 ├── package-lock.json         # Lock file
@@ -84,9 +84,17 @@ An educational platform backend API that connects parents, students, and mentors
 │   └── llmService.js              # Google Gemini AI integration
 ├── Utils/
 │   └── errorResponse.js           # Custom error class
-└── Validators/
-    ├── authValidator.js           # Auth role validation
-    └── inputValidator.js          # Joi input validation schemas
+├── Validators/
+│   ├── authValidator.js           # Auth role validation
+│   └── inputValidator.js          # Joi input validation schemas
+└── testCase/
+    ├── setup.js                   # Test setup configuration
+    ├── auth.test.js               # Authentication tests
+    ├── booking.test.js            # Booking tests
+    ├── lesson.test.js             # Lesson tests
+    ├── llm.test.js                # LLM/AI tests
+    ├── session.test.js            # Session tests
+    └── student.test.js            # Student tests
 ```
 
 ## Prerequisites
@@ -104,8 +112,8 @@ Before running this project, ensure you have:
 
 1. **Clone the repository:**
    ```bash
-   git clone <repository-url>
-   cd mentora
+   git clone https://github.com/udaypali/Mentora_Backend_Task.git
+   cd Mentora_Backend_Task
    ```
 
 2. **Install dependencies:**
@@ -170,37 +178,57 @@ The API will be available at `http://localhost:3000`
 
 ## How to Run Test Cases
 
-**Current Status:** The project does not have a test suite configured.
+The project includes a comprehensive test suite using **Jest** and **Supertest**.
 
-The `package.json` currently has a placeholder test script:
+### Test Configuration
+
+The `package.json` is configured with Jest:
 ```json
 "scripts": {
-  "test": "echo \"Error: no test specified\" && exit 1"
+  "test": "jest --verbose --silent --testPathPatterns=testCase --forceExit --detectOpenHandles",
+  "test:watch": "jest --testPathPatterns=testCase --watch"
 }
 ```
 
-### To Add Testing Capability
+### Prerequisites for Testing
 
-1. **Install testing dependencies:**
+1. Ensure you have installed all dependencies (includes Jest and Supertest):
    ```bash
-   npm install --save-dev jest supertest
+   npm install
    ```
 
-2. **Update `package.json`:**
-   ```json
-   "scripts": {
-     "test": "jest",
-     "test:watch": "jest --watch"
-   }
+2. Set up your environment variables in `.env` file (MongoDB URI is required for integration tests)
+
+### Running Tests
+
+1. **Run all tests once:**
+   ```bash
+   npm test
    ```
 
-3. **Create a test directory and files:**
+2. **Run tests in watch mode (for development):**
+   ```bash
+   npm run test:watch
    ```
-   tests/
-   ├── auth.test.js
-   ├── lesson.test.js
-   └── llm.test.js
-   ```
+
+### Test Coverage
+
+The test suite covers the following modules:
+
+| Test File | Description |
+|-----------|-------------|
+| `auth.test.js` | User signup, login, and profile endpoints |
+| `student.test.js` | Student creation and retrieval |
+| `lesson.test.js` | Lesson creation by mentors |
+| `booking.test.js` | Booking creation and management |
+| `session.test.js` | Session creation and joining |
+| `llm.test.js` | AI summarization endpoint |
+
+### Test Structure
+
+Tests are located in the `testCase/` directory:
+- `setup.js` - Global test configuration (sets NODE_ENV=test)
+- Individual `.test.js` files for each module
 
 ### Test Case Results
 
@@ -436,7 +464,7 @@ curl -X POST http://localhost:3000/llm/summarize \
 1. **Text Input Constraints for LLM:**
    - **Minimum:** 50 characters
    - **Maximum:** 12,000 characters
-   - **Allowed Characters:** Alphanumeric, spaces, and basic punctuation (`.,!?'":;-/()`)
+   - **Allowed Characters:** Alphanumeric, spaces, and basic punctuation (`. ,!?'":;-/()`)
    - **Forbidden Characters:** Brackets `[]` and angle brackets `<>` are not allowed
 
 2. **Rate Limiting:**
@@ -448,7 +476,7 @@ curl -X POST http://localhost:3000/llm/summarize \
    - AI will not hallucinate information - only facts from the input notes are used
    - No introductory text like "Here are the points" is included
 
-4. **No Test Suite:** Currently, no automated tests are implemented. Manual testing via cURL or Postman is required.
+4. **Test Suite:** Automated tests are implemented using Jest. Run `npm test` to execute the test suite.
 
 5. **Security Considerations:**
    - JWT tokens should be kept secure
