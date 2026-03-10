@@ -1,6 +1,8 @@
 require('dotenv').config()
 
 const express = require('express')
+const swaggerUi = require('swagger-ui-express')
+const swaggerSpec = require('./config/swagger')
 const connectDB = require('./config/db')
 const authRoutes = require("./Routes/authRoutes");
 const studentRoutes = require("./Routes/studentRoutes")
@@ -23,6 +25,9 @@ app.use(bookingRoutes)
 app.use(sessionRoutes)
 app.use(llmRoutes)
 
+// Swagger UI – available at /api-docs
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
+
 const PORT = process.env.PORT || 3000
 
 app.get('/', (req, res, next) => {
@@ -36,6 +41,7 @@ connectDB();
 if (process.env.NODE_ENV !== 'test') {
     app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`)
+        console.log(`Swagger UI available at http://localhost:${PORT}/api-docs`)
     })
 }
 
