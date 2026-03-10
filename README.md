@@ -135,8 +135,9 @@ Edit the `.env` file with your configuration:
 PORT=3000
 MONGO_URI=YOUR_MONGODB_URI
 JWT_SECRET=YOUR_JWT_SECRET_KEY
+SESSION_SECRET=YOUR_SESSION_SECRET_KEY
 GEMINI_API_KEY=YOUR_GEMINI_API_KEY
-GEMINI_MODEL_NAME=gemini-1.5-flash
+GEMINI_MODEL_NAME=gemini-2.0-flash
 ```
 
 ### Variable Descriptions
@@ -146,8 +147,9 @@ GEMINI_MODEL_NAME=gemini-1.5-flash
 | `PORT` | Server port number | Yes | `3000` |
 | `MONGO_URI` | MongoDB connection string | Yes | `mongodb://localhost:27017/mentora` or `mongodb+srv://...` |
 | `JWT_SECRET` | Secret key for JWT signing | Yes | `your-super-secret-key-min-32-chars` |
+| `SESSION_SECRET` | Secret key for session management | Optional | `your-super-secret-session-key` |
 | `GEMINI_API_KEY` | Google Gemini API key | Yes | `AIza...` |
-| `GEMINI_MODEL_NAME` | Gemini model name | Optional (defaults to model in code) | `gemini-1.5-flash` |
+| `GEMINI_MODEL_NAME` | Gemini model name | Optional (defaults to model in code) | `gemini-2.0-flash` |
 
 ### How to Set the API Key
 
@@ -247,33 +249,45 @@ Below are screenshots of test cases demonstrating the API functionality:
 | POST | `/auth/signup` | Public | Register new user (parent/mentor) |
 | POST | `/auth/login` | Public | User login |
 | GET | `/me` | Authenticated (Mentor/Parent) | Get user profile |
+| PUT | `/me` | Authenticated (Mentor/Parent) | Update user profile |
+| DELETE | `/me` | Authenticated (Mentor/Parent) | Delete user account and all associated data |
 
 ### Student Routes (`/students`)
 
 | Method | Endpoint | Access | Description |
 |--------|----------|--------|-------------|
 | POST | `/students` | Parent only | Create student (child account) |
-| GET | `/students` | Mentor/Parent | Get students list |
+| GET | `/students` | Mentor/Parent | Get students list (parents see their own, mentors see all) |
+| PUT | `/students/:studentId` | Parent only | Update student details (own students only) |
+| DELETE | `/students/:studentId` | Parent only | Delete student and related bookings (own students only) |
 
 ### Lesson Routes (`/lessons`)
 
 | Method | Endpoint | Access | Description |
 |--------|----------|--------|-------------|
 | POST | `/lessons` | Mentor only | Create new lesson |
+| GET | `/lessons` | Authenticated (All roles) | Get all lessons |
+| GET | `/lessons/:id` | Authenticated (All roles) | Get specific lesson by ID |
+| PUT | `/lessons/:id` | Mentor only | Update lesson (only lesson creator) |
+| DELETE | `/lessons/:id` | Mentor only | Delete lesson and associated sessions/bookings (only lesson creator) |
 
 ### Booking Routes (`/bookings`)
 
 | Method | Endpoint | Access | Description |
 |--------|----------|--------|-------------|
 | POST | `/bookings` | Parent only | Book lesson for student |
+| GET | `/bookings/:bookingId` | Authenticated (All roles) | Get booking details by ID |
+| DELETE | `/bookings/:bookingId` | Parent only | Cancel booking (own student's bookings only) |
 
 ### Session Routes (`/sessions`)
 
 | Method | Endpoint | Access | Description |
 |--------|----------|--------|-------------|
 | POST | `/sessions` | Mentor only | Create session for lesson |
-| GET | `/lessons/:id/sessions` | Mentor only | Get sessions by lesson |
-| POST | `/sessions/:sessionId/join` | Parent only | Student joins session |
+| GET | `/lessons/:lessonId/sessions` | Mentor only | Get sessions by lesson |
+| POST | `/sessions/:sessionId/join` | Parent only | Student joins session (must have booking) |
+| PUT | `/sessions/:sessionId` | Mentor only | Update session (only session creator) |
+| DELETE | `/sessions/:sessionId` | Mentor only | Delete session (only session creator) |
 
 ### LLM Routes (`/llm`)
 
@@ -398,9 +412,101 @@ Expected Response:
   "success": true,
   "data": {
     "summary": "1. Covered basic algebraic equations and problem-solving techniques\n2. Student showed good progress in understanding variables and constants\n3. Successfully solved 5 out of 7 linear equation practice problems",
-    "model": "gemini-1.5-flash"
+    "model": "gemini-2.0-flash"
   }
 }
+```
+
+#### 10. Update User Profile
+```bash
+curl -X PUT http://localhost:3000/me \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <JWT_TOKEN>" \
+  -d '{
+    "name": "Updated Name",
+    "email": "updated@example.com"
+  }'
+```
+
+#### 11. Delete User Account
+```bash
+curl -X DELETE http://localhost:3000/me \
+  -H "Authorization: Bearer <JWT_TOKEN>"
+```
+
+#### 12. Get All Lessons
+```bash
+curl -X GET http://localhost:3000/lessons \
+  -H "Authorization: Bearer <JWT_TOKEN>"
+```
+
+#### 13. Get Specific Lesson
+```bash
+curl -X GET http://localhost:3000/lessons/<LESSON_ID> \
+  -H "Authorization: Bearer <JWT_TOKEN>"
+```
+
+#### 14. Update Lesson (Mentor Only)
+```bash
+curl -X PUT http://localhost:3000/lessons/<LESSON_ID> \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <MENTOR_JWT_TOKEN>" \
+  -d '{
+    "title": "Updated Lesson Title",
+    "description": "Updated lesson description with more details"
+  }'
+```
+
+#### 15. Delete Lesson (Mentor Only)
+```bash
+curl -X DELETE http://localhost:3000/lessons/<LESSON_ID> \
+  -H "Authorization: Bearer <MENTOR_JWT_TOKEN>"
+```
+
+#### 16. Update Student (Parent Only)
+```bash
+curl -X PUT http://localhost:3000/students/<STUDENT_ID> \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <PARENT_JWT_TOKEN>" \
+  -d '{
+    "name": "Updated Student Name",
+    "email": "student_updated@example.com"
+  }'
+```
+
+#### 17. Delete Student (Parent Only)
+```bash
+curl -X DELETE http://localhost:3000/students/<STUDENT_ID> \
+  -H "Authorization: Bearer <PARENT_JWT_TOKEN>"
+```
+
+#### 18. Get Booking Details
+```bash
+curl -X GET http://localhost:3000/bookings/<BOOKING_ID> \
+  -H "Authorization: Bearer <JWT_TOKEN>"
+```
+
+#### 19. Cancel Booking (Parent Only)
+```bash
+curl -X DELETE http://localhost:3000/bookings/<BOOKING_ID> \
+  -H "Authorization: Bearer <PARENT_JWT_TOKEN>"
+```
+
+#### 20. Update Session (Mentor Only)
+```bash
+curl -X PUT http://localhost:3000/sessions/<SESSION_ID> \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <MENTOR_JWT_TOKEN>" \
+  -d '{
+    "topic": "Updated Topic",
+    "summary": "Updated session summary with additional notes"
+  }'
+```
+
+#### 21. Delete Session (Mentor Only)
+```bash
+curl -X DELETE http://localhost:3000/sessions/<SESSION_ID> \
+  -H "Authorization: Bearer <MENTOR_JWT_TOKEN>"
 ```
 
 ## LLM Configuration
@@ -418,8 +524,8 @@ The project integrates **Google Gemini AI** for generating session summaries tha
 4. **Output Format:** Numbered summary (1., 2., 3.) for easy reading
 
 ### Rate Limiting
-- **Limit:** 5 requests per hour per IP address
-- **Window:** 60 minutes
+- **Limit:** 7 requests per 5 seconds per IP address
+- **Window:** 5 seconds
 - **Error Response:**
   ```json
   {
@@ -445,7 +551,7 @@ curl -X POST http://localhost:3000/llm/summarize \
   "success": true,
   "data": {
     "summary": "1. Student learned basic fraction concepts including numerator and denominator\n2. Practiced adding simple fractions with common denominators\n3. Improved understanding of converting mixed numbers after additional examples",
-    "model": "gemini-1.5-flash"
+    "model": "gemini-2.0-flash"
   }
 }
 ```
@@ -470,7 +576,7 @@ curl -X POST http://localhost:3000/llm/summarize \
    - **Forbidden Characters:** Brackets `[]` and angle brackets `<>` are not allowed
 
 2. **Rate Limiting:**
-   - LLM endpoint limited to 5 requests per hour per IP
+   - LLM endpoint limited to 7 requests per 5 seconds per IP
    - This prevents abuse and controls API costs
 
 3. **AI Summary Constraints:**
@@ -497,7 +603,7 @@ curl -X POST http://localhost:3000/llm/summarize \
 2. **Role-Based Access Control** - Three roles: `mentor`, `parent`, `student`
 3. **Password Hashing** - bcrypt with salt round 10
 4. **Input Validation** - Joi schemas for all endpoints
-5. **Rate Limiting** - AI endpoint limited to 5 requests/hour
+5. **Rate Limiting** - AI endpoint limited to 7 requests per 5 seconds
 6. **Error Handling** - Centralized error middleware with custom ErrorResponse class
 
 ## Support
