@@ -276,4 +276,72 @@ router.put('/sessions/:sessionId', authMiddleware, inputValidator(Schema.updateS
  */
 router.get('/lessons/:lessonId/sessions', authMiddleware, inputValidator(Schema.getSession), roleMiddleware(['mentor']), sessionController.getSession)
 
+/**
+ * @swagger
+ * /markAttendance:
+ *   post:
+ *     summary: Mark student attendance for a session and update progress (mentor only)
+ *     tags: [Sessions]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - studentId
+ *               - sessionId
+ *               - lessonId
+ *             properties:
+ *               studentId:
+ *                 type: string
+ *                 pattern: '^[0-9a-fA-F]{24}$'
+ *                 description: MongoDB ObjectId of the student
+ *                 example: 64b1f2c3d4e5f6a7b8c9d0e2
+ *               sessionId:
+ *                 type: string
+ *                 pattern: '^[0-9a-fA-F]{24}$'
+ *                 description: MongoDB ObjectId of the session
+ *                 example: 64b1f2c3d4e5f6a7b8c9d0e5
+ *               lessonId:
+ *                 type: string
+ *                 pattern: '^[0-9a-fA-F]{24}$'
+ *                 description: MongoDB ObjectId of the lesson
+ *                 example: 64b1f2c3d4e5f6a7b8c9d0e3
+ *     responses:
+ *       200:
+ *         description: Attendance marked and progress updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       400:
+ *         description: Validation error or invalid ID format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Forbidden – only mentors can mark attendance
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Session not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.post('/markAttendance', authMiddleware, inputValidator(Schema.markAttendance), roleMiddleware(['mentor']), sessionController.markAttendance)
+
 module.exports = router

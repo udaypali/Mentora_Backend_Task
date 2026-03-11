@@ -211,4 +211,65 @@ describe('Session Endpoints', () => {
             expect(sessionInDb).toBeNull();
         });
     });
+
+    describe('POST /markAttendance', () => {
+        let newSessionId;
+        beforeAll(async () => {
+            // Recreate a session since the previous tests delete it
+            const res = await request(app)
+                .post('/sessions')
+                .set('Authorization', `Bearer ${mentorToken}`)
+                .send({
+                    lessonId: lessonId,
+                    date: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
+                    topic: 'Attendance Test Topic',
+                    summary: 'Testing Mark Attendance'
+                });
+            newSessionId = res.body.id || res.body._id || res.body.data.id || res.body.data._id;
+        });
+
+        afterAll(async () => {
+            await Session.findByIdAndDelete(newSessionId);
+        });
+
+        it('should allow mentor to mark attendance and update progress', async () => {
+            const res = await request(app)
+                .post('/markAttendance')
+                .set('Authorization', `Bearer ${mentorToken}`)
+                .send({
+                    studentId: studentId.toString(),
+                    sessionId: newSessionId.toString(),
+                    lessonId: lessonId.toString()
+                });
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.success).toBe(true);
+            expect(res.body.message).toMatch(/marked|updated/i);
+        });
+
+        it('should NOT allow parent to mark attendance', async () => {
+            const res = await request(app)
+                .post('/markAttendance')
+                .set('Authorization', `Bearer ${parentToken}`)
+                .send({
+                    studentId: studentId.toString(),
+                    sessionId: newSessionId.toString(),
+                    lessonId: lessonId.toString()
+                });
+
+            expect([401, 403]).toContain(res.statusCode);
+        });
+
+        it('should fail if missing required parameters', async () => {
+            const res = await request(app)
+                .post('/markAttendance')
+                .set('Authorization', `Bearer ${mentorToken}`)
+                .send({
+                    studentId: studentId.toString()
+                    // missing sessionId and lessonId
+                });
+
+            expect(res.statusCode).toBe(400); // Bad Request from Input Validator
+        });
+    });
 });
