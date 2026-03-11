@@ -71,6 +71,7 @@ Mentora_Backend_Task/
 ├── Models/
 │   ├── Booking.js                 # Booking schema
 │   ├── Lesson.js                  # Lesson schema
+│   ├── Progress.js                # Student progress tracking schema
 │   ├── Session.js                 # Session schema
 │   ├── Student.js                 # Student schema
 │   └── User.js                    # User schema
@@ -84,7 +85,8 @@ Mentora_Backend_Task/
 ├── Services/
 │   └── llmService.js              # Google Gemini AI integration
 ├── Utils/
-│   └── errorResponse.js           # Custom error class
+│   ├── errorResponse.js           # Custom error class
+│   └── progressHelper.js          # Student progress tracking utilities
 ├── Validators/
 │   ├── authValidator.js           # Auth role validation
 │   └── inputValidator.js          # Joi input validation schemas
@@ -289,6 +291,7 @@ Below are screenshots of test cases demonstrating the API functionality:
 | POST | `/sessions/:sessionId/join` | Parent only | Student joins session (must have booking) |
 | PUT | `/sessions/:sessionId` | Mentor only | Update session (only session creator) |
 | DELETE | `/sessions/:sessionId` | Mentor only | Delete session (only session creator) |
+| POST | `/markAttendance` | Mentor only | Mark attendance and update student progress |
 
 ### LLM Routes (`/llm`)
 
@@ -508,6 +511,18 @@ curl -X DELETE http://localhost:3000/sessions/<SESSION_ID> \
   -H "Authorization: Bearer <MENTOR_JWT_TOKEN>"
 ```
 
+#### 22. Mark Attendance and Update Progress (Mentor Only)
+```bash
+curl -X POST http://localhost:3000/markAttendance \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <MENTOR_JWT_TOKEN>" \
+  -d '{
+    "studentId": "<STUDENT_OBJECT_ID>",
+    "sessionId": "<SESSION_OBJECT_ID>",
+    "lessonId": "<LESSON_OBJECT_ID>"
+  }'
+```
+
 ## LLM Configuration
 
 ### Overview
@@ -584,9 +599,9 @@ curl -X POST http://localhost:3000/llm/summarize \
    - This prevents abuse and controls API costs
 
 3. **AI Summary Constraints:**
-   - Output is limited to exactly 3 bullet points (processed from 3-6 generated points)
-   - AI will not hallucinate information - only facts from the input notes are used
-   - No introductory text like "Here are the points" is included
+    - Output contains 3 to 6 concise bullet points for easy parent review
+    - AI will not hallucinate information - only facts from the input notes are used
+    - No introductory text like "Here are the points" is included
 
 4. **Test Suite:** Automated tests are implemented using Jest. Run `npm test` to execute the test suite.
 
