@@ -599,7 +599,7 @@ curl -X POST http://localhost:3000/llm/summarize \
    - This prevents abuse and controls API costs
 
 3. **AI Summary Constraints:**
-    - Output contains 3 to 6 concise bullet points for easy parent review
+    - Output is limited to exactly 3 bullet points (processed from 3-6 generated points)
     - AI will not hallucinate information - only facts from the input notes are used
     - No introductory text like "Here are the points" is included
 
