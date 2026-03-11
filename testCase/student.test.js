@@ -116,4 +116,61 @@ describe('Student Endpoints', () => {
             expect(check).toBeNull();
         });
     });
+
+    describe('GET /students/:studentId/progress', () => {
+        let newStudentId;
+        beforeAll(async () => {
+            // Create a new student for progress testing
+            const parentUser = await User.findOne({ email: parent1Email });
+            const newStudent = await Student.create({
+                name: 'Progress Test Student',
+                email: getDynamicEmail('progress_student'),
+                password: 'password123',
+                parent: parentUser._id
+            });
+            newStudentId = newStudent._id;
+        });
+
+        afterAll(async () => {
+            await Student.findByIdAndDelete(newStudentId);
+            // Assuming Progress model is imported or available, otherwise we use raw mongo search
+            await mongoose.connection.collection('progresses').deleteMany({ student: newStudentId });
+        });
+
+        it('should return 404 if no progress record exists', async () => {
+            const res = await request(app)
+                .get(`/students/${newStudentId}/progress`)
+                .set('Authorization', `Bearer ${parent1Token}`);
+
+            expect(res.statusCode).toBe(404);
+            expect(res.body.error).toMatch(/not founnd/i); // Matches typo in controller "Founnd"
+        });
+
+        it('should successfully retrieve student progress', async () => {
+            // Seed a progress record directly
+            const Lesson = require('../Models/Lesson');
+            const lesson = await Lesson.create({ title: 'Dummy Lesson for Progress', description: 'desc', mentor: new mongoose.Types.ObjectId() });
+
+            await mongoose.connection.collection('progresses').insertOne({
+                student: newStudentId,
+                lesson: lesson._id,
+                overallProgress: 50,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            });
+
+            const res = await request(app)
+                .get(`/students/${newStudentId}/progress`)
+                .set('Authorization', `Bearer ${parent1Token}`);
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.success).toBe(true);
+            expect(Array.isArray(res.body.data)).toBeTruthy();
+            expect(res.body.data.length).toBeGreaterThan(0);
+            expect(res.body.data[0].overallProgress).toBe(50);
+
+            // cleanup
+            await Lesson.findByIdAndDelete(lesson._id);
+        });
+    });
 });

@@ -1,4 +1,5 @@
-const Joi = require('joi')
+const Joi = require('joi');
+const { markAttendance } = require('../Controllers/sessionController');
 
 const inputValidator = (Schema) => {
     return (req, res, next) => {
@@ -67,9 +68,15 @@ const Schema = {
             role: Joi.string().valid('student').default('student')
         })
     },
-    deleteStudent: { params: Joi.object({ studentId: objectId('Student') }) },
+    deleteStudent: {
+        params: Joi.object({
+            studentId: objectId('Student')
+        })
+    },
     updateStudent: {
-        params: Joi.object({ studentId: objectId('Student') }),
+        params: Joi.object({
+            studentId: objectId('Student')
+        }),
         body: Joi.object({
             name: Joi.string().min(3).optional(),
             email: Joi.string().email().optional(),
@@ -78,16 +85,31 @@ const Schema = {
             parentId: forbidden403('You cannot reassign a student to a different parent.')
         }).min(1)
     },
+    studentProgress: {
+        params: Joi.object({
+            studentId: objectId('Student')
+        })
+    },
     lesson: {
         body: Joi.object({
             title: Joi.string().min(3).required(),
             description: Joi.string().min(10).required()
         })
     },
-    getLesson: { params: Joi.object({ lessonId: objectId('Lesson') }) },
-    deleteLesson: { params: Joi.object({ lessonId: objectId('Lesson') }) },
+    getLesson: {
+        params: Joi.object({
+            lessonId: objectId('Lesson')
+        })
+    },
+    deleteLesson: {
+        params: Joi.object({
+            lessonId: objectId('Lesson')
+        })
+    },
     updateLesson: {
-        params: Joi.object({ lessonId: objectId('Lesson') }),
+        params: Joi.object({
+            lessonId: objectId('Lesson')
+        }),
         body: Joi.object({
             title: Joi.string().min(3).optional(),
             description: Joi.string().min(10).optional()
@@ -99,28 +121,63 @@ const Schema = {
             lessonId: objectId('Lesson')
         })
     },
-    getBooking: { params: Joi.object({ bookingId: objectId('Booking') }) },
-    deleteBooking: { params: Joi.object({ bookingId: objectId('Booking') }) },
+    getBooking: {
+        params: Joi.object({
+            bookingId: objectId('Booking')
+        })
+    },
+    deleteBooking: {
+        params: Joi.object({
+            bookingId: objectId('Booking')
+        })
+    },
     session: {
         body: Joi.object({
             lessonId: objectId('Lesson'),
             date: Joi.date().iso().required(),
             topic: Joi.string().max(100).required(),
-            summary: Joi.string().min(10).required()
+            summary: Joi.string().min(10).required(),
+            status: Joi.string().valid("scheduled", "in-progress", "completed", "cancelled").default("scheduled"),
+            startTime: Joi.date().iso().allow(null, ''),
+            endTime: Joi.date().iso().allow(null, ''),
+            meetingLink: Joi.string().uri().allow(null, ''),
+            recordingUrl: Joi.string().uri().allow(null, ''),
+            maxAttendees: Joi.number().integer().min(1).max(500).default(30)
         })
     },
-    getSession: { params: Joi.object({ lessonId: objectId('Lesson') }) },
-    deleteSession: { params: Joi.object({ sessionId: objectId('Session') }) },
+    getSession: {
+        params: Joi.object({
+            lessonId: objectId('Lesson')
+        })
+    },
+    deleteSession: {
+        params: Joi.object({
+            sessionId: objectId('Session')
+        })
+    },
     updateSession: {
-        params: Joi.object({ sessionId: objectId('Session') }),
+        params: Joi.object({
+            sessionId: objectId('Session')
+        }),
         body: Joi.object({
             topic: Joi.string().max(100).optional(),
             summary: Joi.string().min(10).optional()
         }).min(1)
     },
     joinSession: {
-        params: Joi.object({ sessionId: objectId('Session') }),
-        body: Joi.object({ studentId: objectId('Student') })
+        params: Joi.object({
+            sessionId: objectId('Session')
+        }),
+        body: Joi.object({
+            studentId: objectId('Student')
+        })
+    },
+    markAttendance: {
+        body: Joi.object({
+            studentId: objectId('Student'),
+            sessionId: objectId('Session'),
+            lessonId: objectId('Lesson')
+        })
     },
     llmSummarise: {
         body: Joi.object({

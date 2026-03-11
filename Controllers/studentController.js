@@ -1,8 +1,7 @@
 const ErrorResponse = require('../Utils/errorResponse')
 const Student = require("../Models/Student")
 const Booking = require("../Models/Booking")
-const Session = require("../Models/Session")
-const User = require("../Models/User")
+const Progress = require("../Models/Progress")
 const bcrypt = require("bcrypt")
 
 exports.createStudent = async (req, res, next) => {
@@ -91,3 +90,15 @@ exports.updateStudent = async (req, res, next) => {
         data: updatedStudent
     });
 };
+
+exports.studentProgress = async (req, res, next) => {
+    const { studentId } = req.params
+    const progress = await Progress.find({ student: studentId })
+    if (!progress || progress.length === 0) {
+        return next(new ErrorResponse("Student Progress Record not Founnd", 404))
+    }
+    res.status(200).json({
+        success: true,
+        data: progress
+    })
+}

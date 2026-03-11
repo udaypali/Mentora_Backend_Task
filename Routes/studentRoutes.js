@@ -188,4 +188,56 @@ router.get("/students", authMiddleware, roleMiddleware(['mentor', 'parent']), st
 router.delete('/students/:studentId', authMiddleware, inputValidator(Schema.deleteStudent), roleMiddleware(['parent']), studentController.deleteStudent)
 router.put('/students/:studentId', authMiddleware, inputValidator(Schema.updateStudent), roleMiddleware(['parent']), studentController.updateStudent)
 
+/**
+ * @swagger
+ * /students/{studentId}/progress:
+ *   get:
+ *     summary: Get a student's progress
+ *     tags: [Students]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: studentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           pattern: '^[0-9a-fA-F]{24}$'
+ *         description: MongoDB ObjectId of the student
+ *         example: 64b1f2c3d4e5f6a7b8c9d0e2
+ *     responses:
+ *       200:
+ *         description: Student progress retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *       400:
+ *         description: Invalid ID format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Student progress record not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.get('/students/:studentId/progress', authMiddleware, inputValidator(Schema.studentProgress), studentController.studentProgress)
+
 module.exports = router

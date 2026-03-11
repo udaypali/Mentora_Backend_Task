@@ -2,9 +2,14 @@ const ErrorResponse = require('../Utils/errorResponse')
 const Session = require("../Models/Session")
 const Lesson = require("../Models/Lesson")
 const Booking = require("../Models/Booking")
+const updateStudentProgress = require("../Utils/progressHelper")
 
 exports.session = async (req, res, next) => {
-    const { lessonId, date, topic, summary } = req.body
+    const {
+        lessonId, date, topic, summary,
+        status, startTime, endTime,
+        meetingLink, maxAttendees
+    } = req.body
     if (!lessonId || !date || !topic || !summary) {
         return next(new ErrorResponse("Invalid Request Missing Parameters", 400))
     }
@@ -12,25 +17,27 @@ exports.session = async (req, res, next) => {
     if (!lesson) {
         return next(new ErrorResponse("Lesson not Found", 404))
     }
-    const existingSession = await Session.findOne({ lesson: lessonId })
-    if (existingSession) {
-        return next(new ErrorResponse("Session Already Exists", 400))
+    const duplicateTime = await Session.findOne({ lesson: lessonId, date })
+    if (duplicateTime) {
+        return next(new ErrorResponse("A session for this lesson is already scheduled at this time", 400))
     }
     const session = await Session.create({
         lesson: lessonId,
         date,
         topic,
-        summary
-    })
+        summary,
+        status: status || "scheduled",
+        startTime,
+        endTime,
+        meetingLink,
+        maxAttendees: maxAttendees || 30
+    });
     res.status(201).json({
-        message: "Session Created",
-        id: session._id,
-        lesson: lessonId,
-        date: session.date,
-        topic: session.topic,
-        summary: session.summary
-    })
-}
+        success: true,
+        message: "Session Created Successfully",
+        data: session
+    });
+};
 
 exports.getSession = async (req, res, next) => {
     const { lessonId } = req.params
@@ -102,5 +109,23 @@ exports.joinSession = async (req, res, next) => {
     res.status(200).json({
         message: "Student successfully joined the session",
         attendees: updatedSession.attendees.map(a => a.toString())
+    })
+}
+
+exports.markAttendance = async (req, res, next) => {
+    const { studentId, sessionId, lessonId } = req.body
+    const session = await Session.findById(sessionId)
+    if (!session) return next(new ErrorResponse("Session not found", 404))
+    await Session.findByIdAndUpdate(
+        sessionId,
+        {
+            $addToSet: { attendees: studentId },
+            status: "completed"
+        }
+    )
+    await updateStudentProgress.updateStudentProgress(studentId, lessonId)
+    res.status(200).json({
+        success: true,
+        message: "Attendance marked and progress updated"
     })
 }
